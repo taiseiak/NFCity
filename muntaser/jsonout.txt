@@ -1,1 +1,1 @@
-{"spot": 1, "platenumber": "NEILDMND"}
+{"ciphertext": "JjdbNyGW6h/wj+j3/cpkCBxnOykEXQz7Qe9hsHZlmDHgGkMC6+ykMyAyLz6yO3RkSursXf9xTTKFf1tsj8x9Og==", "hashvalue": "4c7821e40cad6e1f534e0ede2da7a177"}
