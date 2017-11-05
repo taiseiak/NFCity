@@ -3,6 +3,68 @@ import time
 import os
 import requests
 import json
+import sys
+from Crypto.Hash import SHA256
+from Crypto.Cipher import AES
+from hashlib import md5
+from base64 import b64decode
+from base64 import b64encode
+from Crypto import Random
+
+
+
+
+# Padding for the input string --not
+# related to encryption itself.
+BLOCK_SIZE = 16  # Bytes
+pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * \
+                chr(BLOCK_SIZE - len(s) % BLOCK_SIZE)
+unpad = lambda s: s[:-ord(s[len(s) - 1:])]
+
+
+class AESCipher:
+    """
+    Usage:
+        c = AESCipher('password').encrypt('message')
+        m = AESCipher('password').decrypt(c)
+    Tested under Python 3 and PyCrypto 2.6.1.
+    """
+
+
+    def __init__(self, key):
+        #self.key = md5(key.encode('utf8')).hexdigest()
+	##self.key = md5(key).hexdigest()
+	##hacky solution
+	self.key = "hackathongsu2017"
+
+
+    def encrypt(self, raw):
+        raw = pad(raw)
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return b64encode(iv + cipher.encrypt(raw))
+
+    def decrypt(self, enc):
+        enc = b64decode(enc)
+        iv = enc[:16]
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return unpad(cipher.decrypt(enc[16:])).decode('utf8')
+
+
+
+
+
+
+
+##START CODE
+
+
+
+
+
+
+
+
 
 GPIO.setmode(GPIO.BCM)
 
@@ -62,16 +124,20 @@ while count <3 :
 
 
 ## local image recognition
-    recogjson = os.system("alpr -n 1 -j lp.jpg")
+    recogjson = os.system("alpr -n 1 -j lp.jpg >> rout.txt")
     out_dict = {}
-    data = json.load(recogjson)
-    #print(data)
-    for r in data['results']:
-      print('platenumber: ' + r['plate'])
-      out_dict['platenumber'] = r['plate']
-      out_dict['spot'] = 1
+    time.sleep(6)
+
+    with open ('out.txt') as json_file:
+      data = json.load(json_file)
+      #print(data)
+      for r in data['results']:
+        print('platenumber: ' + r['plate'])
+        out_dict['platenumber'] = r['plate']
+        out_dict['spot'] = 1
 
     payload1 = json.dumps(out_dict)
+    
 ##
 ##    with open('payloadout.txt', 'w') as payloadoutfile:  
 ##      json.dump(payload1, payloadoutfile)
@@ -81,6 +147,36 @@ while count <3 :
     print('\n')
 
     ## now call the server
+
+    ##first encrypt
+    payloadciphertext = AESCipher('hackathongsu2017').encrypt(payload1)
+    print('\npayloadciphertext: ' + payloadciphertext + '\n')
+
+
+    ##hacky
+    hashpayload = 'somehashvalue'
+    
+    payload_out = {}
+    payload_out['ciphertext'] = payloadciphertext
+    payload_out['hashvalue'] = hashpayload
+    print(payload_out)
+    print('\n')
+
+    jsonsend = json.dumps(payload_out)
+
+    jstring = str(jsonsend)
+    print(jsonsend)
+
+  
+
+    #r = requests.post('http://NFCityServer.us-west-2.elasticbeanstalk.com/send_license', data=jstring)
+    r = requests.post('http://NFCityServer.us-west-2.elasticbeanstalk.com/send_license', data={"ciphertext": payloadciphertext, "hashvalue": "somehashvalue"})
+
+
+   
+    
+    print('\n the server says : ' +r.text)
+
 ##    url = 'http://18.216.77.110:8080/upload'
 ##    files = {'upload_image': open('parked.jpg','rb')}
 ##    r = requests.post(url, files=files)
@@ -103,6 +199,8 @@ while count <3 :
 
     response = requests.request("GET", url, headers=headers, params=querystring)
 
+    print('\n the server says : ' +response.text)
+
     #print(response.text)
     jsonPKIN = json.loads(response.text)
 
@@ -119,6 +217,10 @@ while count <3 :
   else :
     if flag == 1:
       ## car has left the spot, so check GE servers to see if a car has left the lot as well
+
+      ##end transaction
+      
+      r = requests.post('http://NFCityServer.us-west-2.elasticbeanstalk.com/end_transaction', data={"ciphertext": payloadciphertext, "hashvalue": "somehashvalue"})
 
       print ('\n  now calling GE api to confirm car exit from lot\n')
 
