@@ -1,30 +1,28 @@
-#include <rgb_lcd.h>
 #include <Wire.h>
 
-rgb_lcd lcd;
+int led = 13;
 
 void setup(){
   Wire.begin();
-  lcd.begin(16, 2);
   Serial.begin(9600);
-  lcd.print("Hello");
+  pinMode(led, OUTPUT);
 }
 
 void loop(){
   Wire.requestFrom(4,6);
-  lcd.setCursor(0,1);
   
   while(Wire.available()){
     int i = Wire.read();
     
     //Serial.println(i);
     if(i==1){
-      lcd.print("Success");
+      digitalWrite(led, HIGH);
+      delay(1000);
+      digitalWrite(led, LOW);
       Serial.println("Success!");
       //system("sendJson.sh");
     }
   }
   
   delay(500);
-  lcd.clear();
 }
