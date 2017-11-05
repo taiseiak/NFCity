@@ -10,13 +10,15 @@ ECHO = 24
 
 count = 0
 
+GPIO.setup(TRIG,GPIO.OUT)
+GPIO.setup(ECHO,GPIO.IN)
+
+GPIO.output(TRIG, False)
+
+
 while count <3 :
   print "Distance Measurement In Progress"
 
-  GPIO.setup(TRIG,GPIO.OUT)
-  GPIO.setup(ECHO,GPIO.IN)
-
-  GPIO.output(TRIG, False)
   print "Waiting For Sensor To Settle"
   time.sleep(2)
 
@@ -38,7 +40,7 @@ while count <3 :
 
   print "Distance:",distance,"cm"
 
-  GPIO.cleanup()
+  #GPIO.cleanup()
 
   time.sleep(10)
   
@@ -55,7 +57,7 @@ while count <3 :
 
     ## now call the server
 ##    url = 'http://18.216.77.110:8080/upload'
-##    files = {'upload_image': open('lp.jpg','rb')}
+##    files = {'upload_image': open('parked.jpg','rb')}
 ##    r = requests.post(url, files=files)
 ##
 ##    print ('\n the server replied: ')
@@ -64,4 +66,5 @@ while count <3 :
   
   count +=1
 
-
+GPIO.cleanup()
+print ('\n end of program reached!!\n')
